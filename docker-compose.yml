@@ -1,0 +1,55 @@
+services:
+
+  postgres:
+    container_name: postgres
+    image: postgres:latest
+    restart: always
+    environment:
+      - POSTGRES_USER=${PG_USER}
+      - POSTGRES_PASSWORD=${PG_PASSWORD}
+      - POSTGRES_DB=${PG_DB}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./db/sql:/docker-entrypoint-initdb.d
+
+  pgadmin:
+    container_name: pgadmin
+    depends_on:
+      - postgres
+    image: dpage/pgadmin4:latest
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${PG_ADMIN_MAIL}
+      - PGADMIN_DEFAULT_PASSWORD=${PG_ADMIN_PASSWORD}
+    ports:
+      - 5050:80
+    volumes:
+      - pg-admin-data:/var/lib/pgadmin
+    restart: always
+
+
+  frontend:
+    container_name: frontend
+    depends_on:
+      - postgres
+    build:
+      context: '.'
+      dockerfile: ./frontend/Dockerfile
+      target: dev
+    restart: always
+    command: npm run dev
+    environment:
+      - NODE_ENV=development 
+    volumes:
+      - ./frontend:/app
+      - ./prisma:/app/prisma
+      - /app/node_modules
+      - /app/.next
+    ports:
+      - 3000:3000
+
+volumes:
+  db-data:
+  pg-admin-data:
+
+
+
